@@ -1,6 +1,6 @@
 fn main() {
-    // let number: u64 = 600851475143;  // [71, 839, 1471, 6857];
-    let number = 13195;  // [5, 7, 13, 29];
+    let number: u64 = 600851475143;  // [71, 839, 1471, 6857];
+    // let number = 13195;  // [5, 7, 13, 29];
     // let factors = trial_division(number);
     let factors = fermat_factorization(number);
     println!("{factors:#?}");
