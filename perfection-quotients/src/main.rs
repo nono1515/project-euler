@@ -1,62 +1,42 @@
-use std::collections::HashMap;
+use num_bigint::BigUint;
+use num_traits::{One, Zero};
 
 fn main() {
-    let mut cache = HashMap::new();
+    let limit = BigUint::parse_bytes(b"1000000000000000000", 10).unwrap();
+    let mut sum = BigUint::zero();
 
-    // let n = 1e18 as u64;
-    let n = 1e7 as u64;
-    // let n = 6 as u64;
-    // let sum: u64 = (1..=n).filter(|i| perfect_quotient(*i, &mut cache) % 1.0 == 0.5).sum();
-    let divs = divisors(50, &mut cache);
-    println!("{:?}", cache);
-    println!("{}", cache.len());
-    println!("{}, {:?}", 50, divs);
-    let divs = divisors(100, &mut cache);
-    println!("{:?}", cache);
-    println!("{}", cache.len());
-    let divs = divisors(1e10 as u64, &mut cache);
-    println!("{}", cache.len());
+    for a in 1..60 { // 2^60 > 10^18, so this is sufficient
+        let power_of_two = BigUint::from(2u32).pow(a);
+        let sigma_power_of_two = &power_of_two * 2u32 - 1u32;
 
-    // for i in 1..=20 {
-    //     println!("{}: {}", i, perfect_quotient(i, &mut cache));
-    // }
-
-    // println!("{:?}", perfect_quotient(n, &mut cache));
-    // println!("{:?}", divisors);
-    // println!("{}", sum);
-}
-
-fn perfect_quotient(n: u64, cache: &mut HashMap<u64, Vec<u64>>) -> f64 {
-    sigma(n, cache) as f64 / n as f64
-}
-
-fn sigma(n: u64, cache: &mut HashMap<u64, Vec<u64>>) -> u64 {
-    divisors(n, cache).iter().sum()
-}
-
-
-fn divisors(n: u64, cache: &mut HashMap<u64, Vec<u64>>) -> Vec<u64> {
-    if let Some(cached_result) = cache.get(&n) {
-        return cached_result.clone();
-    }
-
-    let mut divs = vec![1, n];
-    let sqrt_n = (n as f64).sqrt().ceil() as u64;
-
-    for i in 2..=sqrt_n {
-        if n % i == 0 {
-            divs.push(i);
-            if i != n / i {
-                divs.push(n / i);
-                divs.append(&mut divisors(n / i, cache));
+        let mut q = BigUint::one();
+        loop {
+            let n = &power_of_two * &q * &q;
+            if n > limit {
                 break;
             }
+
+            let sigma_q = sigma_odd_square(&q);
+            if &sigma_power_of_two * &sigma_q == &n + &q * &q {
+                sum += n;
+            }
+
+            q += 1u32;
         }
     }
 
-    divs.sort();
-    divs.dedup(); // Remove duplicates
-    
-    cache.insert(n, divs.clone());
-    divs
+    println!("Sum: {}", sum);
+}
+
+fn sigma_odd_square(q: &BigUint) -> BigUint {
+    let q_squared = q * q;
+    let mut result = &q_squared + q + 1u32;
+    let mut d = BigUint::from(3u32);
+    while &d * &d <= *q {
+        if q % &d == BigUint::zero() {
+            result += &d + q / &d;
+        }
+        d += 2u32;
+    }
+    result
 }
