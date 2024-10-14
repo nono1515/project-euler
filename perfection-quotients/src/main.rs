@@ -1,42 +1,82 @@
-use num_bigint::BigUint;
-use num_traits::{One, Zero};
+use prime_factorization::Factorization;
 
 fn main() {
-    let limit = BigUint::parse_bytes(b"1000000000000000000", 10).unwrap();
-    let mut sum = BigUint::zero();
+    // navie approach, much too slow
+    // let n = 50;
+    // println!("{:?}", get_euler_divisors(n))
 
-    for a in 1..60 { // 2^60 > 10^18, so this is sufficient
-        let power_of_two = BigUint::from(2u32).pow(a);
-        let sigma_power_of_two = &power_of_two * 2u32 - 1u32;
+    // From https://en.wikipedia.org/wiki/Divisor_function#Other_properties_and_identities
+    // Similarly, the number σ1(n) is odd if and only if n is a square or twice a square.[9]
+    // [9]: Gioia, A. A.; Vaidya, A. M. (1967), "Amicable numbers with opposite parity"
+    let mut sum: u128 = 0;
+    let lim = (10_u64.pow(18) as f64 / 2.0).sqrt().ceil() as u128;
+    for i in 1..10_u128.pow(9) {
+        if i % 1_000_000 == 0 {
+            println!("{i}");
+        }
+        let mut divs = Factorization::run(i).prime_factor_repr();
+        divs.iter_mut().for_each(|(_, c)| *c *= 2);
 
-        let mut q = BigUint::one();
-        loop {
-            let n = &power_of_two * &q * &q;
-            if n > limit {
-                break;
+        if i < lim {
+            let sigma = sigma_from_primes(&divs);
+            let n = i * i;
+            if (2.0 * sigma as f64 / n as f64) % 2.0 == 1.0 {
+                sum += n as u128
             }
-
-            let sigma_q = sigma_odd_square(&q);
-            if &sigma_power_of_two * &sigma_q == &n + &q * &q {
-                sum += n;
+        }
+        if i % 2 == 1 {
+            divs.iter_mut()
+                .filter(|(p, _)| *p == 2)
+                .for_each(|(_, k)| *k += 1);
+            let sigma = sigma_from_primes(&divs);
+            let n = 2 * i * i;
+            if (2.0 * sigma as f64 / n as f64) % 2.0 == 1.0 {
+                sum += n as u128
             }
-
-            q += 1u32;
         }
     }
 
-    println!("Sum: {}", sum);
+    println!("{}", sum)
 }
 
-fn sigma_odd_square(q: &BigUint) -> BigUint {
-    let q_squared = q * q;
-    let mut result = &q_squared + q + 1u32;
-    let mut d = BigUint::from(3u32);
-    while &d * &d <= *q {
-        if q % &d == BigUint::zero() {
-            result += &d + q / &d;
+fn sigma_from_primes(divs: &Vec<(u128, u32)>) -> u128 {
+    divs.iter().fold(1, |curr, (p, k)| {
+        // println!("{curr}, {p}^{k}");
+        curr * (p.pow(k + 1) - 1) / (p - 1)
+    })
+}
+
+fn get_euler_divisors(lim: usize) -> Vec<i32> {
+    let mut divisor_function = vec![];
+
+    for n in 1..lim {
+        let mut i: i32 = 1;
+        let mut sigma = 0;
+        loop {
+            let i1 = n as i32 - (3 * i.pow(2) - i) / 2;
+            if i1 < 0 {
+                break;
+            }
+            let i2 = n as i32 - (3 * i.pow(2) + i) / 2;
+            let sigma1 = match i1 {
+                0 => n as i32,
+                1.. => divisor_function[i1 as usize - 1],
+                _ => 0,
+            };
+            let sigma2 = match i2 {
+                0 => n as i32,
+                1.. => divisor_function[i2 as usize - 1],
+                _ => 0,
+            };
+            match i % 2 {
+                1 => sigma += sigma1 + sigma2,
+                0 => sigma -= sigma1 + sigma2,
+                _ => panic!(),
+            };
+            i += 1;
         }
-        d += 2u32;
+        divisor_function.push(sigma);
     }
-    result
+
+    divisor_function
 }

@@ -1,0 +1,16 @@
+[workspace]
+members = [
+    "even-fibonacci-numbers",
+    "largest-prime-factor",
+    "even-fibonacci-numbers",
+    "largest-palindrome-product",
+    "largest-prime-factor",
+    "multples-of-3-and-5",
+    "perfection-quotients",
+    "smallest-multiple",
+    "sum-square-difference",
+    "xth-prime",
+]
+resolver = "2"
+
+default-members = ["perfection-quotients"]
