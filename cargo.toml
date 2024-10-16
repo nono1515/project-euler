@@ -6,11 +6,12 @@ members = [
     "largest-palindrome-product",
     "largest-prime-factor",
     "multples-of-3-and-5",
-    "perfection-quotients",
+    "perfection-quotients",  # still working on this one
     "smallest-multiple",
     "sum-square-difference",
     "xth-prime",
+    "largest-product-in-a-series",
 ]
 resolver = "2"
 
-default-members = ["perfection-quotients"]
+default-members = ["largest-product-in-a-series"]
